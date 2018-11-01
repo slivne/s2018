@@ -29,8 +29,8 @@ func get_followers(user string) []string {
 
 
 func insert_tweet(session *gocql.Session, user string, tweet_id gocql.UUID, tweet_time gocql.UUID, tweet_txt string){
-	if err := session.Query(fmt.Sprintf("INSERT INTO tweets (user, tweet_id, time, text) VALUES ('%s',%s, %s,'%s')",
-		user, tweet_id, tweet_time, tweet_txt)).Exec(); err != nil {
+	if err := session.Query("INSERT INTO tweets (user, tweet_id, time, text) VALUES ( ?, ?, ?, ?)",
+		user, tweet_id, tweet_time, tweet_txt).Exec(); err != nil {
 			log.Fatal(err)
 	}
 
@@ -40,20 +40,25 @@ func insert_tweet(session *gocql.Session, user string, tweet_id gocql.UUID, twee
 		if (rand.Intn(100) < 5) {
 			liked = true
 		}
-		if err := session.Query(fmt.Sprintf("INSERT INTO timeline (user, tweet_id, time, author, text, liked) VALUES ('%s',%s, %s,'%s','%s', %t)",
-			follower, tweet_id, tweet_time, user, tweet_txt, liked)).Exec(); err != nil {
+		if err := session.Query("INSERT INTO timeline (user, tweet_id, time, author, text, liked) VALUES ( ?, ?, ?, ?, ?, ?)",
+			follower, tweet_id, tweet_time, user, tweet_txt, liked).Exec(); err != nil {
 				log.Fatal(err)
 		}
 	}
 }
 
-func get_timeline(session *gocql.Session, user string) {
+func get_timeline(session *gocql.Session, user string, filter_liked bool) {
 	var tweet_id gocql.UUID
 	var author string
 	var text string
+	var liked bool
 
-	iter := session.Query(fmt.Sprintf("SELECT tweet_id, author, text FROM timeline WHERE user = '%s'",user)).Iter()
-	for iter.Scan(&tweet_id, &author, &text) {}
+	query := "SELECT tweet_id, author, text, liked FROM timeline WHERE user = ?"
+	if filter_liked {
+		query = "SELECT tweet_id, author, text, liked FROM timeline WHERE user = ? and liked = true ALLOW FILTERING"
+	}
+	iter := session.Query(query, user).Iter()
+	for iter.Scan(&tweet_id, &author, &text, &liked) {}
 	if err := iter.Close(); err != nil {
 		log.Fatal(err)
 	}
@@ -64,6 +69,7 @@ func main() {
 	cluster := gocql.NewCluster("172.17.0.2")
 	cluster.Keyspace = "scylla_demo"
 	cluster.Consistency = gocql.Quorum
+        cluster.PoolConfig.HostSelectionPolicy = gocql.TokenAwareHostPolicy(gocql.RoundRobinHostPolicy());
 	session, _ := cluster.CreateSession()
 	defer session.Close()
 
@@ -81,7 +87,7 @@ func main() {
 				insert_tweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%d",user,msg))
 			}
 		} else {
-			get_timeline(session, user)
+			get_timeline(session, user, random.Intn(10) < 5)
 		}
 	}
 }

@@ -1,0 +1,30 @@
+sudo docker run --name s-3.0-1 \
+--volume `pwd`/scylla/scylla.yaml:/etc/scylla/scylla.yaml \ 
+--volume `pwd`/scylla/cassandra-rackdc.1.properties:/etc/scylla/cassandra-rackdc.properties \
+ -d scylladb/scylla:3.0-rc1
+
+sudo docker run --name s-3.0-2 \
+--volume `pwd`/scylla/scylla.yaml:/etc/scylla/scylla.yaml \ 
+--volume `pwd`/scylla/cassandra-rackdc.1.properties:/etc/scylla/cassandra-rackdc.properties \
+-d scylladb/scylla:3.0-rc1 --seeds="$(sudo docker inspect --format='{{ .NetworkSettings.IPAddress }}' s-3.0-1)"
+
+sudo docker run --name s-3.0-3 \
+--volume `pwd`/scylla/scylla.yaml:/etc/scylla/scylla.yaml \ 
+--volume `pwd`/scylla/cassandra-rackdc.1.properties:/etc/scylla/cassandra-rackdc.properties \
+ -d scylladb/scylla:3.0-rc1 --seeds="$(sudo docker inspect --format='{{ .NetworkSettings.IPAddress }}' s-3.0-1)"
+
+sudo docker run --name s-3.0-4 \
+--volume `pwd`/scylla/scylla.yaml:/etc/scylla/scylla.yaml \ 
+--volume `pwd`/scylla/cassandra-rackdc.2.properties:/etc/scylla/cassandra-rackdc.properties \
+-d scylladb/scylla:3.0-rc1 --seeds="$(sudo docker inspect --format='{{ .NetworkSettings.IPAddress }}' s-3.0-1)"
+
+sudo docker run --name s-3.0-5 \
+--volume `pwd`/scylla/scylla.yaml:/etc/scylla/scylla.yaml \ 
+--volume `pwd`/scylla/cassandra-rackdc.2.properties:/etc/scylla/cassandra-rackdc.properties \
+-d scylladb/scylla:3.0-rc1 --seeds="$(sudo docker inspect --format='{{ .NetworkSettings.IPAddress }}' s-3.0-1)"
+
+sudo docker run --name s-3.0-5 \
+--volume `pwd`/scylla/scylla.yaml:/etc/scylla/scylla.yaml \ 
+--volume `pwd`/scylla/cassandra-rackdc.2.properties:/etc/scylla/cassandra-rackdc.properties \
+-d scylladb/scylla:3.0-rc1 --seeds="$(sudo docker inspect --format='{{ .NetworkSettings.IPAddress }}' s-3.0-1)"
+
