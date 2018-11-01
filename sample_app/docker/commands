@@ -1,0 +1,9 @@
+docker kill s-3.0-1 s-3.0-2 s-3.0-3 s-3.0-4 s-3.0-5 s-3.0-6
+docker rm s-3.0-1 s-3.0-2 s-3.0-3 s-3.0-4 s-3.0-5 s-3.0-6
+docker run --name s-3.0-1 -d scylladb/scylla:3.0-rc1 --experimental 1
+sleep 30
+docker run --name s-3.0-2 -d scylladb/scylla:3.0-rc1 --seeds="$(docker inspect --format='{{ .NetworkSettings.IPAddress }}' s-3.0-1)" --experimental 1
+sleep 30
+docker run --name s-3.0-3 -d scylladb/scylla:3.0-rc1 --seeds="$(docker inspect --format='{{ .NetworkSettings.IPAddress }}' s-3.0-1)" --experimental 1
+#docker run --name s-3.0-4 -d scylladb/scylla:3.0-rc1 --seeds="$(docker inspect --format='{{ .NetworkSettings.IPAddress }}' s-3.0-1)" --experimental 1
+

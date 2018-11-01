@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
+	"math/rand"
 
 	"github.com/gocql/gocql"
 )
@@ -34,8 +36,12 @@ func insert_tweet(session *gocql.Session, user string, tweet_id gocql.UUID, twee
 
 
 	for _, follower := range get_followers(user) {
-		if err := session.Query(fmt.Sprintf("INSERT INTO timeline (user, tweet_id, time, author, text) VALUES ('%s',%s,%s,'%s','%s')",
-			follower, tweet_id, tweet_time, user, tweet_txt)).Exec(); err != nil {
+		liked := false
+		if (rand.Intn(1000) <= 1) {
+			liked = true
+		}
+		if err := session.Query(fmt.Sprintf("INSERT INTO timeline (user, tweet_id, time, author, text, liked) VALUES ('%s',%s, %s,'%s','%s', %t)",
+			follower, tweet_id, tweet_time, user, tweet_txt, liked)).Exec(); err != nil {
 				log.Fatal(err)
 		}
 	}
@@ -46,7 +52,7 @@ func get_timeline(session *gocql.Session, user string) {
 	var author string
 	var text string
 
-	iter := session.Query(`SELECT tweet_id, author, text FROM timeline WHERE user = ?`, user).Iter()
+	iter := session.Query(fmt.Sprintf("SELECT tweet_id, author, text FROM timeline WHERE user = '%s' limit 50",user)).Iter()
 	for iter.Scan(&tweet_id, &author, &text) {}
 	if err := iter.Close(); err != nil {
 		log.Fatal(err)
@@ -55,23 +61,27 @@ func get_timeline(session *gocql.Session, user string) {
 
 func main() {
 	// connect to the cluster
-	cluster := gocql.NewCluster("127.0.0.1", "127.0.0.2", "127.0.0.3")
-	cluster.Keyspace = "example"
+	cluster := gocql.NewCluster("172.17.0.2")
+	cluster.Keyspace = "scylla_demo"
 	cluster.Consistency = gocql.Quorum
 	session, _ := cluster.CreateSession()
 	defer session.Close()
 
 	generate_users()
 
-	// insert tweets
-	for _, user := range users {
-		for msg := 0 ; msg < 100; msg++ {
-			insert_tweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%d",user,msg))
-		}
-	}
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	// fetch timelins
-	for _, user := range users {
-		get_timeline(session, user)
+	rate := time.Second / 20
+	throttle := time.Tick(rate)
+	for (true) {
+		<-throttle
+		user := users[random.Intn(len(users))]
+		if random.Intn(10) > 5 {
+			for msg := 0 ; msg < 100; msg++ {
+				insert_tweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%d",user,msg))
+			}
+		} else {
+			get_timeline(session, user)
+		}
 	}
 }
