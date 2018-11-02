@@ -21,6 +21,48 @@ var (
 	consistency = flag.String("consistency", "quorum", "consistency level")
 )
 
+func main() {
+
+	flag.Parse()
+
+	if *hosts == "" {
+		flag.Usage()
+		return
+	}
+
+	// connect to the cluster
+	cluster := gocql.NewCluster(strings.Split(*hosts, ",")...)
+	cluster.Keyspace = "scylla_demo"
+	cluster.Consistency = consistencyFromString(*consistency)
+	session, _ := cluster.CreateSession()
+	defer session.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	quitSignal(cancel)
+	generateUsers()
+
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	rate := time.Second / 20
+	throttle := time.NewTicker(rate)
+	for {
+		select {
+		case <-throttle.C:
+			user := users[random.Intn(len(users))]
+			if random.Intn(10) > 5 {
+				for msg := 0; msg < 100; msg++ {
+					insertTweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%d", user, msg))
+				}
+			} else {
+				getTimeline(session, user)
+			}
+		case <-ctx.Done():
+			throttle.Stop()
+			return
+		}
+	}
+}
+
 func generateUsers() {
 	for i := 0; i < len(users); i++ {
 		users[i] = fmt.Sprintf("user%d", i)
@@ -92,45 +134,4 @@ func consistencyFromString(str string) gocql.Consistency {
 	}
 
 	return c
-}
-func main() {
-
-	flag.Parse()
-
-	if *hosts == "" {
-		flag.Usage()
-		return
-	}
-
-	// connect to the cluster
-	cluster := gocql.NewCluster(strings.Split(*hosts, ",")...)
-	cluster.Keyspace = "scylla_demo"
-	cluster.Consistency = consistencyFromString(*consistency)
-	session, _ := cluster.CreateSession()
-	defer session.Close()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	quitSignal(cancel)
-	generateUsers()
-
-	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	rate := time.Second / 20
-	throttle := time.NewTicker(rate)
-	for {
-		select {
-		case <-throttle.C:
-			user := users[random.Intn(len(users))]
-			if random.Intn(10) > 5 {
-				for msg := 0; msg < 100; msg++ {
-					insertTweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%d", user, msg))
-				}
-			} else {
-				getTimeline(session, user)
-			}
-		case <-ctx.Done():
-			throttle.Stop()
-			return
-		}
-	}
 }
