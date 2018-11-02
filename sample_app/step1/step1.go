@@ -34,7 +34,10 @@ func main() {
 	cluster := gocql.NewCluster(strings.Split(*hosts, ",")...)
 	cluster.Keyspace = "scylla_demo"
 	cluster.Consistency = consistencyFromString(*consistency)
-	session, _ := cluster.CreateSession()
+	session, err := cluster.CreateSession()
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer session.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
