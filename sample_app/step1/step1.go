@@ -1,15 +1,20 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/gocql/gocql"
 )
 
-var users = make([]string, 100)
+var (
+	hosts = flag.String("hosts", "", "comma separated list of hosts to connect to")
+	users = make([]string, 1000)
+)
 
 func generate_users() {
 	for i := 0; i < len(users); i++ {
@@ -59,8 +64,16 @@ func get_timeline(session *gocql.Session, user string) {
 }
 
 func main() {
+
+	flag.Parse()
+
+	if *hosts == "" {
+		flag.Usage()
+		return
+	}
+
 	// connect to the cluster
-	cluster := gocql.NewCluster("172.17.0.2")
+	cluster := gocql.NewCluster(strings.Split(*hosts, ",")...)
 	cluster.Keyspace = "scylla_demo"
 	cluster.Consistency = gocql.Quorum
 	session, _ := cluster.CreateSession()
