@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -63,6 +67,22 @@ func getTimeline(session *gocql.Session, user string) {
 	}
 }
 
+func quitSignal(cancel context.CancelFunc) chan bool {
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+
+	signal.Notify(sigs, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		select {
+		case <-sigs:
+			cancel()
+		}
+	}()
+
+	return done
+}
+
 func main() {
 
 	flag.Parse()
@@ -79,21 +99,28 @@ func main() {
 	session, _ := cluster.CreateSession()
 	defer session.Close()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	quitSignal(cancel)
 	generateUsers()
 
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	rate := time.Second / 20
-	throttle := time.Tick(rate)
-	for true {
-		<-throttle
-		user := users[random.Intn(len(users))]
-		if random.Intn(10) > 5 {
-			for msg := 0; msg < 100; msg++ {
-				insertTweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%d", user, msg))
+	throttle := time.NewTicker(rate)
+	for {
+		select {
+		case <-throttle.C:
+			user := users[random.Intn(len(users))]
+			if random.Intn(10) > 5 {
+				for msg := 0; msg < 100; msg++ {
+					insertTweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%d", user, msg))
+				}
+			} else {
+				getTimeline(session, user)
 			}
-		} else {
-			getTimeline(session, user)
+		case <-ctx.Done():
+			throttle.Stop()
+			return
 		}
 	}
 }
