@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	hosts = flag.String("hosts", "", "comma separated list of hosts to connect to")
-	users = make([]string, 1000)
+	hosts       = flag.String("hosts", "", "comma separated list of hosts to connect to")
+	users       = make([]string, 1000)
+	consistency = flag.String("consistency", "quorum", "consistency level")
 )
 
 func generateUsers() {
@@ -83,6 +84,15 @@ func quitSignal(cancel context.CancelFunc) chan bool {
 	return done
 }
 
+func consistencyFromString(str string) gocql.Consistency {
+	var c gocql.Consistency
+
+	if err := c.UnmarshalText([]byte(strings.ToUpper(str))); err != nil {
+		return gocql.Quorum
+	}
+
+	return c
+}
 func main() {
 
 	flag.Parse()
@@ -95,7 +105,7 @@ func main() {
 	// connect to the cluster
 	cluster := gocql.NewCluster(strings.Split(*hosts, ",")...)
 	cluster.Keyspace = "scylla_demo"
-	cluster.Consistency = gocql.Quorum
+	cluster.Consistency = consistencyFromString(*consistency)
 	session, _ := cluster.CreateSession()
 	defer session.Close()
 
