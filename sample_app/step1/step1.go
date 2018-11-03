@@ -18,7 +18,6 @@ import (
 var (
 	hosts       = flag.String("hosts", "", "comma separated list of hosts to connect to")
 	users       = make([]string, 1000)
-	consistency = flag.String("consistency", "quorum", "consistency level")
 )
 
 func main() {
@@ -33,7 +32,8 @@ func main() {
 	// connect to the cluster
 	cluster := gocql.NewCluster(strings.Split(*hosts, ",")...)
 	cluster.Keyspace = "scylla_demo"
-	cluster.Consistency = consistencyFromString(*consistency)
+        cluster.Consistency = gocql.Quorum
+        cluster.Timeout = 5000000000
 	session, err := cluster.CreateSession()
 	if err != nil {
 		log.Fatal(err)
@@ -51,12 +51,9 @@ func main() {
 	for {
 		select {
 		case <-throttle.C:
-			user := users[random.Intn(len(users))]
-			if random.Intn(10) > 5 {
-				for msg := 0; msg < 100; msg++ {
-					insertTweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%d", user, msg))
-				}
-			} else {
+			for count := 0; count < 10; count++ {
+				user := users[random.Intn(len(users))]
+                                insertTweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%s",user,time.Now().String()))
 				getTimeline(session, user)
 			}
 		case <-ctx.Done():
@@ -90,7 +87,7 @@ func insertTweet(session *gocql.Session, user string, tweetID gocql.UUID, tweetT
 
 	for _, follower := range getFollowers(user) {
 		liked := false
-		if rand.Intn(100) < 5 {
+		if rand.Intn(1000) < 1 {
 			liked = true
 		}
 		if err := session.Query(fmt.Sprintf("INSERT INTO timeline (user, tweet_id, time, author, text, liked) VALUES ('%s',%s, %s,'%s','%s', %t)",
@@ -127,14 +124,4 @@ func quitSignal(cancel context.CancelFunc) chan bool {
 	}()
 
 	return done
-}
-
-func consistencyFromString(str string) gocql.Consistency {
-	var c gocql.Consistency
-
-	if err := c.UnmarshalText([]byte(strings.ToUpper(str))); err != nil {
-		return gocql.Quorum
-	}
-
-	return c
 }

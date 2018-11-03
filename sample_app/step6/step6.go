@@ -37,7 +37,7 @@ func insert_tweet(session *gocql.Session, user string, tweet_id gocql.UUID, twee
 
 	for _, follower := range get_followers(user) {
 		liked := false
-		if (rand.Intn(100) < 5) {
+		if (rand.Intn(1000) <= 1) {
 			liked = true
 		}
 		if err := session.Query("INSERT INTO timeline (user, tweet_id, time, author, text, liked) VALUES ( ?, ?, ?, ?, ?, ?)",
@@ -47,16 +47,26 @@ func insert_tweet(session *gocql.Session, user string, tweet_id gocql.UUID, twee
 	}
 }
 
-func get_timeline(session *gocql.Session, user string) {
+func get_timeline(session *gocql.Session, user string, filter_liked bool) {
 	var tweet_id gocql.UUID
 	var author string
 	var text string
 	var liked bool
 
-	iter := session.Query("SELECT tweet_id, author, text, liked FROM timeline WHERE user = ?", user).Iter()
-	for iter.Scan(&tweet_id, &author, &text, &liked) {}
-	if err := iter.Close(); err != nil {
-		log.Fatal(err)
+	if !filter_liked {
+		query := "SELECT tweet_id, author, text, liked FROM timeline WHERE user = ? limit 50"
+		iter := session.Query(query, user).Iter()
+		for iter.Scan(&tweet_id, &author, &text, &liked) {}
+		if err := iter.Close(); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		query := "SELECT tweet_id, author, text, liked FROM timeline_liked WHERE user = ? and liked = ? limit 50"
+		iter := session.Query(query, user, true).Iter()
+		for iter.Scan(&tweet_id, &author, &text, &liked) {}
+		if err := iter.Close(); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -64,9 +74,9 @@ func main() {
 	// connect to the cluster
         cluster := gocql.NewCluster("172.17.0.2", "172.17.0.3", "172.17.0.4")
 	cluster.Keyspace = "scylla_demo"
-	cluster.Consistency = gocql.Quorum
-        cluster.Timeout = 5000000000
-        cluster.PoolConfig.HostSelectionPolicy = gocql.TokenAwareHostPolicy(gocql.RoundRobinHostPolicy());
+	cluster.Consistency = gocql.LocalQuorum
+	cluster.Timeout = 5000000000
+        cluster.PoolConfig.HostSelectionPolicy = gocql.TokenAwareHostPolicy(gocql.DCAwareRoundRobinPolicy("dc1"));
 	session, _ := cluster.CreateSession()
 	defer session.Close()
 
@@ -83,7 +93,7 @@ func main() {
 			for msg := 0 ; msg < 1; msg++ {
 				insert_tweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%d",user,msg))
 			}
-			get_timeline(session, user)
+			get_timeline(session, user, random.Intn(10) < 5)
 		}
 	}
 }

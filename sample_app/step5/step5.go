@@ -53,22 +53,30 @@ func get_timeline(session *gocql.Session, user string, filter_liked bool) {
 	var text string
 	var liked bool
 
-	query := "SELECT tweet_id, author, text, liked FROM timeline WHERE user = ?"
-	if filter_liked {
-		query = "SELECT tweet_id, author, text, liked FROM timeline_liked WHERE user = ? and liked = true"
-	}
-	iter := session.Query(query, user).Iter()
-	for iter.Scan(&tweet_id, &author, &text, &liked) {}
-	if err := iter.Close(); err != nil {
-		log.Fatal(err)
+	if !filter_liked {
+		query := "SELECT tweet_id, author, text, liked FROM timeline WHERE user = ? limit 50"
+		iter := session.Query(query, user).Iter()
+		for iter.Scan(&tweet_id, &author, &text, &liked) {}
+		if err := iter.Close(); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		query := "SELECT tweet_id, author, text, liked FROM timeline_liked WHERE user = ? and liked = ? limit 50"
+		iter := session.Query(query, user, true).Iter()
+		for iter.Scan(&tweet_id, &author, &text, &liked) {}
+		if err := iter.Close(); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
 func main() {
 	// connect to the cluster
-	cluster := gocql.NewCluster("172.17.0.2")
+        cluster := gocql.NewCluster("172.17.0.2", "172.17.0.3", "172.17.0.4")
+
 	cluster.Keyspace = "scylla_demo"
 	cluster.Consistency = gocql.Quorum
+	cluster.Timeout = 5000000000
         cluster.PoolConfig.HostSelectionPolicy = gocql.TokenAwareHostPolicy(gocql.RoundRobinHostPolicy());
 	session, _ := cluster.CreateSession()
 	defer session.Close()
@@ -81,12 +89,11 @@ func main() {
 	throttle := time.Tick(rate)
 	for (true) {
 		<-throttle
-		user := users[random.Intn(len(users))]
-		if random.Intn(10) > 5 {
-			for msg := 0 ; msg < 100; msg++ {
+		for count := 0; count < 10; count++ {
+			user := users[random.Intn(len(users))]
+			for msg := 0 ; msg < 1; msg++ {
 				insert_tweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%d",user,msg))
 			}
-		} else {
 			get_timeline(session, user, random.Intn(10) < 5)
 		}
 	}
