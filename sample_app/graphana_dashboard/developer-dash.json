@@ -337,6 +337,7 @@
             "#299c46"
           ],
           "datasource": "prometheus",
+          "description": "Please verify that you are using on the client side a TokenAware load balancing policy and  executing CQL requests with prepared statements",
           "format": "percent",
           "gauge": {
             "maxValue": 100,
@@ -414,6 +415,7 @@
             "#299c46"
           ],
           "datasource": "prometheus",
+          "description": "Prepared statements remove the over head of parsing the query every time and allow optimal routing of requests from client to server",
           "format": "percent",
           "gauge": {
             "maxValue": 100,
@@ -1321,7 +1323,7 @@
             {}
           ],
           "spaceLength": 10,
-          "span": 4,
+          "span": 6,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -1379,7 +1381,7 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "prometheus",
-          "description": "",
+          "description": "Cross DC Read requests sources:\n- Consistency Level that is not LOCAL_XXX\n- Tables with read_repair_chance > 0\n\nNote:\n- If requests are supposed to be  DC local - verify client is using a DCAware policy",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -1408,7 +1410,7 @@
             {}
           ],
           "spaceLength": 10,
-          "span": 4,
+          "span": 6,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -1427,93 +1429,6 @@
           "timeFrom": null,
           "timeShift": null,
           "title": "Intra DC vs Cross DC read requests",
-          "tooltip": {
-            "msResolution": false,
-            "shared": true,
-            "sort": 0,
-            "value_type": "cumulative"
-          },
-          "transparent": false,
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "ops",
-              "logBase": 1,
-              "max": null,
-              "min": 0,
-              "show": true
-            },
-            {
-              "format": "short",
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ]
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "class": "ops_panel",
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "prometheus",
-          "description": "",
-          "editable": true,
-          "error": false,
-          "fill": 0,
-          "grid": {},
-          "id": 77,
-          "legend": {
-            "alignAsTable": false,
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "rightSide": false,
-            "show": false,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [
-            {}
-          ],
-          "spaceLength": 10,
-          "span": 4,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(irate(scylla_database_total_reads{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])) / sum(irate(scylla_cql_reads{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])) ",
-              "format": "time_series",
-              "hide": false,
-              "intervalFactor": 1,
-              "legendFormat": "",
-              "metric": "",
-              "refId": "A",
-              "step": 1
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "# of Reads per CQL Read request",
           "tooltip": {
             "msResolution": false,
             "shared": true,
@@ -5751,7 +5666,7 @@
     ]
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {
