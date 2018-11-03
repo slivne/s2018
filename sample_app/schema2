@@ -1,7 +1,4 @@
-drop keyspace scylla_demo;
-
-CREATE KEYSPACE scylla_demo WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 3};
-
+CREATE KEYSPACE scylla_demo WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1':3, 'dc2':3};
 
 CREATE TABLE scylla_demo.tweets (
     tweet_id uuid PRIMARY KEY,
