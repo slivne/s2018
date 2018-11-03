@@ -61,9 +61,10 @@ func get_timeline(session *gocql.Session, user string) {
 
 func main() {
 	// connect to the cluster
-	cluster := gocql.NewCluster("172.17.0.2")
+	cluster := gocql.NewCluster("172.17.0.2", "172.17.0.3", "172.17.0.4")
 	cluster.Keyspace = "scylla_demo"
 	cluster.Consistency = gocql.Quorum
+        cluster.Timeout = 5000000000
 	session, _ := cluster.CreateSession()
 	defer session.Close()
 
@@ -75,12 +76,11 @@ func main() {
 	throttle := time.Tick(rate)
 	for (true) {
 		<-throttle
-		user := users[random.Intn(len(users))]
-		if random.Intn(10) > 5 {
-			for msg := 0 ; msg < 100; msg++ {
+		for count := 0; count < 10; count++ {
+			user := users[random.Intn(len(users))]
+			for msg := 0 ; msg < 1; msg++ {
 				insert_tweet(session, user, gocql.TimeUUID(), gocql.TimeUUID(), fmt.Sprintf("msg_%s_%d",user,msg))
 			}
-		} else {
 			get_timeline(session, user)
 		}
 	}
