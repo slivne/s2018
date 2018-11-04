@@ -102,7 +102,7 @@ func getTimeline(session *gocql.Session, user string) {
 	var author string
 	var text string
 
-	iter := session.Query(fmt.Sprintf("SELECT tweet_id, author, text FROM timeline WHERE user = '%s'", user)).Iter()
+	iter := session.Query(fmt.Sprintf("SELECT tweet_id, author, text FROM timeline WHERE user = '%s' limit 50", user)).Iter()
 	for iter.Scan(&tweetID, &author, &text) {
 	}
 	if err := iter.Close(); err != nil {
