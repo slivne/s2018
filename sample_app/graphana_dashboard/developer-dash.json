@@ -507,6 +507,7 @@
             "#299c46"
           ],
           "datasource": "prometheus",
+          "description": "100 % of the requests should be paged\n\nNon Paged request sources:\n- Client modifying the fetch size\n\nNon Paged requests require reading all the results in returning them in a single request.",
           "format": "percent",
           "gauge": {
             "maxValue": 100,
@@ -586,6 +587,7 @@
             "#299c46"
           ],
           "datasource": "prometheus",
+          "description": "Reversed CQL Reads entail additional processing on server side\n\nSources: CQL Read requests with ORDER BY that is different from the \"CLUSTERING ORDER BY\" of the table\n\nTODO: Provide info on large partition reversed scans\n\nAlternatives:\n\n* Denormalize your data (use a Materialized View)",
           "format": "percent",
           "gauge": {
             "maxValue": 100,
