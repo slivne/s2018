@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 1,
   "hideControls": false,
-  "id": 7,
+  "id": 8,
   "links": [],
   "refresh": "5s",
   "rows": [
@@ -326,6 +326,98 @@
           ],
           "title": "Dashboards",
           "type": "dashlist"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "New row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": "200px",
+      "panels": [
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "#d44a3a",
+            "rgba(237, 129, 40, 0.89)",
+            "#299c46"
+          ],
+          "datasource": "prometheus",
+          "description": "100 % of the requests should be prepared\n\nPrepared statements remove the over head of parsing the query every time and allow optimal routing of requests from client to server",
+          "format": "percent",
+          "gauge": {
+            "maxValue": 100,
+            "minValue": 0,
+            "show": true,
+            "thresholdLabels": false,
+            "thresholdMarkers": false
+          },
+          "id": 65,
+          "interval": null,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": true,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": false
+          },
+          "tableColumn": "Value",
+          "targets": [
+            {
+              "expr": "ceil(100 - sum(irate(scylla_query_processor_statements_prepared{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])) /  clamp_min((sum(irate(scylla_cql_reads{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])) + sum(irate(scylla_cql_inserts{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])) + sum(irate(scylla_cql_updates{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])) + sum(irate(scylla_cql_deletes{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])) ),1) * 100)",
+              "format": "time_series",
+              "hide": false,
+              "instant": false,
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "aaa",
+              "refId": "A"
+            }
+          ],
+          "thresholds": "99,99.9",
+          "title": "CQL Prepared Statements",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current"
         },
         {
           "cacheTimeout": null,
@@ -337,7 +429,7 @@
             "#299c46"
           ],
           "datasource": "prometheus",
-          "description": "Please verify that you are using on the client side a TokenAware load balancing policy and  executing CQL requests with prepared statements",
+          "description": "100 % of the requests should be Token Aware\n\nNon Token Aware requests sources:\n* Non Prepared Stamements\n* Client not using a TokenAware load balancing policy\n\nTokenAware requests are sent to a Scylla node that is also a replica.  Non TokenAware requests require extra hop and additional processing.",
           "format": "percent",
           "gauge": {
             "maxValue": 100,
@@ -394,86 +486,6 @@
           ],
           "thresholds": "99.9,99",
           "title": "Token Aware",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "current"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": true,
-          "colors": [
-            "#d44a3a",
-            "rgba(237, 129, 40, 0.89)",
-            "#299c46"
-          ],
-          "datasource": "prometheus",
-          "description": "Prepared statements remove the over head of parsing the query every time and allow optimal routing of requests from client to server",
-          "format": "percent",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": true,
-            "thresholdLabels": false,
-            "thresholdMarkers": false
-          },
-          "id": 65,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "span": 2,
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": true,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "Value",
-          "targets": [
-            {
-              "expr": "ceil(100.0-clamp_max((clamp_min(sum(irate(scylla_query_processor_statements_prepared{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])),10) - 10)  / clamp_min(sum(irate(scylla_transport_requests_served{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])),1),1)*100)",
-              "format": "time_series",
-              "hide": false,
-              "instant": false,
-              "interval": "",
-              "intervalFactor": 1,
-              "legendFormat": "aaa",
-              "refId": "A"
-            }
-          ],
-          "thresholds": "99,99.9",
-          "title": "Prepared Statements",
           "type": "singlestat",
           "valueFontSize": "80%",
           "valueMaps": [
@@ -653,6 +665,7 @@
             "#299c46"
           ],
           "datasource": "prometheus",
+          "description": "ALLOW FILTERING CQL Reads  entail additional processing on server side \n\nSources: CQL Read requests with \"ALLOW FILTERING\"\n\nALLOW FILTERING should be used when large parts of the  filtered data is returned - check \n\"ALLOW FILTERING CQL Read Filtered Rows\"\n\nAlternatives:\n- Use a Secondary Index\n- Denormalize your data (use a Materialized View)",
           "format": "percent",
           "gauge": {
             "maxValue": 100,
@@ -785,7 +798,7 @@
           "tableColumn": "Value",
           "targets": [
             {
-              "expr": "ceil(clamp_min(sum(irate(scylla_cql_filtered_rows_matched_total{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])),0)  / clamp_min(sum(irate(scylla_cql_filtered_rows_read_total{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])),1)*100)",
+              "expr": "round(clamp_min(sum(irate(scylla_cql_filtered_rows_matched_total{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])),0)  / clamp_min(sum(irate(scylla_cql_filtered_rows_read_total{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])),1)*100)",
               "format": "time_series",
               "hide": false,
               "instant": false,
@@ -807,6 +820,93 @@
             }
           ],
           "valueName": "current"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "New row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": "200px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "prometheus",
+          "fill": 1,
+          "id": 72,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 2,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(irate(scylla_query_processor_statements_prepared{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])) by ([[by]])",
+              "format": "time_series",
+              "hide": false,
+              "intervalFactor": 2,
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Non Prepared Statements",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
         },
         {
           "aliasColors": {},
@@ -851,81 +951,6 @@
           "timeFrom": null,
           "timeShift": null,
           "title": "Non Token Aware",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ]
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "prometheus",
-          "fill": 1,
-          "id": 72,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": false,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 2,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(irate(scylla_query_processor_statements_prepared{instance=~\"[[node]]\",cluster=~\"$cluster|$^\", dc=~\"$dc\", shard=~\"[[shard]]\"}[30s])) by ([[by]])",
-              "format": "time_series",
-              "hide": false,
-              "intervalFactor": 2,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Non Prepared Statements",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -1381,7 +1406,7 @@
           "dashLength": 10,
           "dashes": false,
           "datasource": "prometheus",
-          "description": "Cross DC Read requests sources:\n- Consistency Level that is not LOCAL_XXX\n- Tables with read_repair_chance > 0\n\nNote:\n- If requests are supposed to be  DC local - verify client is using a DCAware policy",
+          "description": "Cross DC Read requests sources:\n- Consistency Level that is not LOCAL_XXX\n- Tables with read_repair_chance > 0\n\nNote:\n- If requests are supposed to be  DC local - verify client is using a DCAware policy and a LOCAL_XX consistency lvel",
           "editable": true,
           "error": false,
           "fill": 0,
@@ -5696,6 +5721,6 @@
     ]
   },
   "timezone": "browser",
-  "title": "Scylla Developer 3.0",
-  "version": 2
+  "title": "Scylla Developer 2 3.0",
+  "version": 3
 }
